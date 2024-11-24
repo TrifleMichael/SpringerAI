@@ -1,0 +1,3 @@
+settings = {
+    "gravity": 1
+}
