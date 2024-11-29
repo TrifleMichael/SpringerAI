@@ -1,0 +1,5 @@
+Physics is calculated in the same frame of reference as the graphical representation, which also means that:
+- The positive y direction is pointing under ground.
+- The amount of pixels in visualization may affect the physical space the agents interact with.
+
+Physics does simulate gravity, collision and springs but it assumes 100% friction and equal mass among points.

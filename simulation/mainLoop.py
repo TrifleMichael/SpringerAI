@@ -2,12 +2,13 @@ import pygame
 import sys
 from math import radians
 from simulationManager import SimulationManager
+import settings
 
 pygame.init()
 
 
 # Screen dimensions
-WIDTH, HEIGHT = 800, 600
+WIDTH, HEIGHT = settings.settings["x_res"], settings.settings["y_res"]
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Rotated Rectangle")
 
@@ -33,19 +34,19 @@ while running:
 
     screen.fill(BLACK)
 
-    rect_surface = pygame.Surface((rect_width, rect_height), pygame.SRCALPHA)
-    rect_surface.fill(rect_color)
+    # rect_surface = pygame.Surface((rect_width, rect_height), pygame.SRCALPHA)
+    # rect_surface.fill(rect_color)
 
     # Rotate the rectangle
-    rotated_surface = pygame.transform.rotate(rect_surface, angle)
-    rotated_rect = rotated_surface.get_rect(center=rect_center)
+    # rotated_surface = pygame.transform.rotate(rect_surface, angle)
+    # rotated_rect = rotated_surface.get_rect(center=rect_center)
 
     # Draw the rotated rectangle onto the screen
-    screen.blit(rotated_surface, rotated_rect.topleft)
+    # screen.blit(rotated_surface, rotated_rect.topleft)
 
-    angle += 1
-    if angle >= 360:
-        angle -= 360
+    # angle += 1
+    # if angle >= 360:
+    #     angle -= 360
 
     sim_manager.run_frame()
 
