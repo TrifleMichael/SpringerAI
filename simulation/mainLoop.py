@@ -6,7 +6,6 @@ import settings
 
 pygame.init()
 
-
 # Screen dimensions
 WIDTH, HEIGHT = settings.settings["x_res"], settings.settings["y_res"]
 screen = pygame.display.set_mode((WIDTH, HEIGHT))

@@ -104,8 +104,14 @@ def line_react_to_ground(line: Line, ground: Line):
         ground_unit_vec /= np.sqrt((ground_unit_vec**2).sum())
         ground_unit_vec = Point(ground_unit_vec[0], ground_unit_vec[1])
         # Conserve only the perpendicular part
-        perp_unit_vec = rotate_point_around_point(Point(0, 0), ground_unit_vec, np.pi/2) 
-        if perp_unit_vec.position_vector[1] < 0: # If position vector points up up then rotate it by 180 deg
+        perp_unit_vec = rotate_point_around_point(Point(0, 0), ground_unit_vec, np.pi/2)
+        # TODO: Make the tie breaker below more reasonable
+        if ground_unit_vec.position_vector[0] == 0: # If leg 90 deg to ground then swing to the direction the speed is pointing to
+            if line.speed_matrix[air_point_index][0] > 0:
+                perp_unit_vec = Point(1, 0)
+            else:
+                perp_unit_vec = Point(-1, 0)
+        if perp_unit_vec.position_vector[1] < 0: # If perp vector points up up then rotate it by 180 deg
             perp_unit_vec.position_vector *= -1
         speed_perp_angle = angle_between_vectors(perp_unit_vec.position_vector, line.speed_matrix[air_point_index])
         speed_module = np.sqrt(np.sum(line.speed_matrix[air_point_index]**2))
