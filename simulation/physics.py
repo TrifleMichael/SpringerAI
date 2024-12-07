@@ -99,22 +99,26 @@ def line_react_to_ground(line: Line, ground: Line):
 
         air_point_index = 1 - ground_point_index
 
-        # TODO: Conserve momentum of the top point
         # Calculate unit vector towards ground point
         ground_unit_vec = line.position_matrix[ground_point_index] - line.position_matrix[air_point_index]
-        ground_unit_vec /= np.sqrt(((ground_unit_vec[1] - ground_unit_vec[0])**2).sum())
+        ground_unit_vec /= np.sqrt((ground_unit_vec**2).sum())
         ground_unit_vec = Point(ground_unit_vec[0], ground_unit_vec[1])
         # Conserve only the perpendicular part
-        perp_unit_vec = rotate_point_around_point(Point(0, 0), ground_unit_vec, np.pi/2)
-        angle = angle_between_vectors(perp_unit_vec.position_vector, line.speed_matrix[air_point_index])
-        line.speed_matrix[air_point_index] *= np.cos(angle)
-        # TODO: Something is fishy above
+        perp_unit_vec = rotate_point_around_point(Point(0, 0), ground_unit_vec, np.pi/2) 
+        if perp_unit_vec.position_vector[1] < 0: # If position vector points up up then rotate it by 180 deg
+            perp_unit_vec.position_vector *= -1
+        speed_perp_angle = angle_between_vectors(perp_unit_vec.position_vector, line.speed_matrix[air_point_index])
+        speed_module = np.sqrt(np.sum(line.speed_matrix[air_point_index]**2))
+        line.speed_matrix[air_point_index] = perp_unit_vec.position_vector * abs(np.cos(speed_perp_angle)) * speed_module
+
+        # a = line.position_matrix[0] - line.position_matrix[1]
+        # print(np.sqrt(np.sum(a**2)))
+
         # Correct above ground point to maintain constant length # TODO: FINISH
         # actual_lenght = np.sqrt(((line.position_matrix[air_point_index] - line.position_matrix[ground_point_index])**2).sum())
         # line.position_matrix[air_point_index] = 
         # line.position_matrix[air_point_index] = line.position_matrix[air_point_index] - line.position_matrix[ground_point_index]
         # raise NotImplementedError("Ayyo")
-    
 
 def intersect(l1: Line, l2: Line):
     p1, p2 = l1.position_matrix[0], l1.position_matrix[1]

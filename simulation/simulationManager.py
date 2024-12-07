@@ -5,7 +5,7 @@ import solids
 class SimulationManager:
     def __init__(self, display: pygame.Surface):
         self.display = display
-        self.lines = [physics.Line(physics.Point(120, 300), physics.Point(100, 400))]
+        self.lines = [physics.Line(physics.Point(200, 300), physics.Point(100, 400))]
         self.ground = solids.Ground(display)
 
     def run_frame(self):

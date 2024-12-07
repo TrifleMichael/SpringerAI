@@ -34,20 +34,6 @@ while running:
 
     screen.fill(BLACK)
 
-    # rect_surface = pygame.Surface((rect_width, rect_height), pygame.SRCALPHA)
-    # rect_surface.fill(rect_color)
-
-    # Rotate the rectangle
-    # rotated_surface = pygame.transform.rotate(rect_surface, angle)
-    # rotated_rect = rotated_surface.get_rect(center=rect_center)
-
-    # Draw the rotated rectangle onto the screen
-    # screen.blit(rotated_surface, rotated_rect.topleft)
-
-    # angle += 1
-    # if angle >= 360:
-    #     angle -= 360
-
     sim_manager.run_frame()
 
     # Update the display
