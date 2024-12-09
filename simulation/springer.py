@@ -5,10 +5,19 @@ import settings
 
 class Springer:
     def __init__(self, starting_coords: physics.Point, length: float, logic: SpringerLogic):
+        self.starting_coords = starting_coords
         self.line = physics.Line(starting_coords, physics.Point(starting_coords.position_vector[0], starting_coords.position_vector[1]-length))
         self.logic = logic
-
+        self.marked_for_removal = False
         self.step = 0
+        self.state = {}
+
+    def updateState(self):
+        self.state["step"] = self.step
+        self.state["x_distance"] = max(self.line.position_matrix[0][0], self.line.position_matrix[1][0]) - self.starting_coords.position_vector[0]
+        self.state["leg_angle"] = physics.angle_between_vectors(self.line.position_matrix[0] - self.line.position_matrix[1], np.array([0, 1]))
+        # Leg angle is measured from bottom direction clockwise
+        print(self.state["leg_angle"])
 
     def move(self):
         self.line.move()
@@ -18,14 +27,15 @@ class Springer:
         self.line.fall()
 
     def reactToGround(self, ground_line: physics.Line):
-        physics.line_react_to_ground(self.line, ground_line)
+        result = physics.line_react_to_ground(self.line, ground_line)
+        if result == "underground":
+            self.marked_for_removal = True
 
     def performAction(self, ground_line: physics.Line):
-        action = self.logic.chooseAction({"step": self.step})
+        self.updateState()
+        action = self.logic.chooseAction(self.state)
         if action == "jump":
-            print("JUMPING, at least trying")
-
-            # TODO: Move to physics
+            # TODO: Move to physics (jump(line, ground))
             # Get ground and air index
             if self.line.position_matrix[0][1] > self.line.position_matrix[1][1]:
                 ground_index = 0

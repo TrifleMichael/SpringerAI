@@ -21,6 +21,8 @@ class SimulationManager:
             springer.performAction(self.ground.ground_line) # Must be after react to ground and before move (jumps are negated at react to ground)
             springer.move()
 
+        self.springers = [springer for springer in self.springers if not springer.marked_for_removal]
+
     def run_visual(self):
         self.ground.draw()
         for springer in self.springers:

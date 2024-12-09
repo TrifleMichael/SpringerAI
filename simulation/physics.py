@@ -1,11 +1,6 @@
 import numpy as np
 import settings
 
-# TODO:
-# Add rotation (lines must spin)
-# Angular momentum might hurt
-# Add springers
-
 class Point:
     def __init__(self, x: float, y: float):
         self.position_vector = np.array([x, y], dtype=np.float64)
@@ -57,9 +52,11 @@ class Line:
 
     def normalize(self):
         # Ignores speed
+
         # Move to p1 frame of reference
         self.position_matrix[1] -= self.position_matrix[0]
         self.position_matrix[0] -= self.position_matrix[0]
+        
         # Cast to unit vector
         self.position_matrix[1] /= sum(self.position_matrix[1])
         self.length = 1
@@ -82,12 +79,13 @@ def rotate_line_around_point(point_stationary: Point, line: Line, angle: float):
     return Line(p1_rotated, p2_rotated)
 
 def line_react_to_ground(line: Line, ground: Line):
+    # Assumes no actors outside visible plane
     if line.position_matrix[0][1] > ground.position_matrix[0][1] and line.position_matrix[1][1] > ground.position_matrix[0][1]:
-        raise NotImplementedError("Both ends of line underground, this part needs more code!")
+        return "underground"
     intersect_point = intersect(line, ground)
     if intersect_point is None:
         # Ground too far away
-        return
+        return "nothing"
     else:
         # Shift line to stay on the ground
         ground_point_index = 0 if line.position_matrix[0][1] > line.position_matrix[1][1] else 1
@@ -103,9 +101,11 @@ def line_react_to_ground(line: Line, ground: Line):
         ground_unit_vec = line.position_matrix[ground_point_index] - line.position_matrix[air_point_index]
         ground_unit_vec /= np.sqrt((ground_unit_vec**2).sum())
         ground_unit_vec = Point(ground_unit_vec[0], ground_unit_vec[1])
+
         # Conserve only the perpendicular part
         perp_unit_vec = rotate_point_around_point(Point(0, 0), ground_unit_vec, np.pi/2)
-        # TODO: Make the tie breaker below more reasonable
+
+        # TODO: Make the tie breaker below more reasonably written
         if ground_unit_vec.position_vector[0] == 0: # If leg 90 deg to ground then swing to the direction the speed is pointing to
             if line.speed_matrix[air_point_index][0] > 0:
                 perp_unit_vec = Point(1, 0)
