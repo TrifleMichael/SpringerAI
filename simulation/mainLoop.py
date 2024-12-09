@@ -12,17 +12,14 @@ WIDTH, HEIGHT = settings.settings["x_res"], settings.settings["y_res"]
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Rotated Rectangle")
 
-sim_manager = SimulationManager(screen, SpringerLogic())
+springer_logic = SpringerLogic()
+sim_manager = SimulationManager(screen, springer_logic)
 
 # Clock for controlling the frame rate
 clock = pygame.time.Clock()
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
-
-rect_width, rect_height = 100, 50
-rect_color = WHITE
-rect_center = (WIDTH // 2, HEIGHT // 2)
 
 angle = 0
 
