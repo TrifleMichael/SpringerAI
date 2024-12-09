@@ -15,13 +15,15 @@ class Springer:
         self.last_jump = settings.settings["jump_cooldown"]
         self.last_shift = settings.settings["shift_cooldown"]
 
-    def updateState(self):
+    # TODO: Remove ground line from update state
+    def updateState(self, ground_line: physics.Line):
         self.state["step"] = self.step
         self.state["x_distance"] = max(self.line.position_matrix[0][0], self.line.position_matrix[1][0]) - self.starting_coords.position_vector[0]
         self.state["leg_angle"] = physics.angle_between_vectors(self.line.position_matrix[0] - self.line.position_matrix[1], np.array([0, 1]))
         # Leg angle is measured from bottom direction clockwise
         self.state["last_jump"] = self.last_jump
         self.state["last_shift"] = self.last_shift
+        self.state["height"] = self.getHeight(ground_line)
 
     def move(self):
         self.line.move()
@@ -37,8 +39,17 @@ class Springer:
         if result == "underground":
             self.marked_for_removal = True
 
+    def getHeight(self, ground_line: physics.Line):
+        if self.line.position_matrix[0][1] > self.line.position_matrix[1][1]:
+            ground_index = 0
+        else:
+            ground_index = 1
+        return ground_line.position_matrix[0][1] - self.line.position_matrix[ground_index][1]
+    
+        
+
     def performAction(self, ground_line: physics.Line):
-        self.updateState()
+        self.updateState(ground_line)
         action = self.logic.chooseAction(self.state)
         if action == "jump" and self.last_jump > settings.settings["jump_cooldown"]:
             self.last_jump = 0

@@ -10,9 +10,10 @@ class SimulationManager:
         self.ground = solids.Ground(display)
         self.springers = [Springer(physics.Point(200, 300), 100, springer_logic)]
 
-    def run_frame(self):
+    def run_frame(self, run_animation):
         self.run_physics()
-        self.run_visual()
+        if run_animation:
+            self.run_visual()
 
     def run_physics(self):
         for springer in self.springers:

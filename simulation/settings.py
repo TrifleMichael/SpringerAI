@@ -1,5 +1,6 @@
 settings = {
     # Graphics
+    "first_animation_frame": 100,
     "x_res": 900,
     "y_res": 600,
 
