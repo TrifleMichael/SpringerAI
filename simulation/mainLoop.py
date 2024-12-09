@@ -2,6 +2,7 @@ import pygame
 import sys
 from math import radians
 from simulationManager import SimulationManager
+from SpringerLogic import SpringerLogic
 import settings
 
 pygame.init()
@@ -11,7 +12,7 @@ WIDTH, HEIGHT = settings.settings["x_res"], settings.settings["y_res"]
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Rotated Rectangle")
 
-sim_manager = SimulationManager(screen)
+sim_manager = SimulationManager(screen, SpringerLogic())
 
 # Clock for controlling the frame rate
 clock = pygame.time.Clock()

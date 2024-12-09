@@ -24,7 +24,9 @@ class Springer:
         action = self.logic.chooseAction({"step": self.step})
         if action == "jump":
             print("JUMPING, at least trying")
+
             # TODO: Move to physics
+            # Get ground and air index
             if self.line.position_matrix[0][1] > self.line.position_matrix[1][1]:
                 ground_index = 0
             else:
@@ -32,6 +34,8 @@ class Springer:
             air_index = 1 - ground_index
             # Check if standing on the ground
             if self.line.position_matrix[ground_index][1] - ground_line.position_matrix[0][1] > -settings.settings["epsilon"]:
+                # Stop current movement
+                self.line.speed_matrix *= 0                
                 # Get unit vector for direction 
                 unit_vec = self.line.position_matrix[air_index] - self.line.position_matrix[ground_index]
                 unit_vec /= np.sqrt(np.sum(unit_vec**2))
@@ -48,5 +52,4 @@ class Springer:
             # Check if standing on the ground
             if self.line.position_matrix[ground_index][1] - ground_line.position_matrix[0][1] > -settings.settings["epsilon"]:
                 self.line.speed_matrix[air_index][0] += settings.settings["side_force"]
-                a = 1
             

@@ -5,27 +5,21 @@ from springer import Springer
 from SpringerLogic import SpringerLogic
 
 class SimulationManager:
-    def __init__(self, display: pygame.Surface):
+    def __init__(self, display: pygame.Surface, springer_logic: SpringerLogic):
         self.display = display
-        # self.lines = [physics.Line(physics.Point(200, 300), physics.Point(100, 400))]
-        self.lines = [] # TODO Remove
         self.ground = solids.Ground(display)
-        self.springers = [Springer(physics.Point(200, 300), 100, SpringerLogic())]
+        self.springers = [Springer(physics.Point(200, 300), 100, springer_logic)]
 
     def run_frame(self):
         self.run_physics()
         self.run_visual()
 
     def run_physics(self):
-        # for line in self.lines:
-            # line.fall()
-            # physics.line_react_to_ground(line, self.ground.ground_line)
-            # line.move()
         for springer in self.springers:
             springer.fall()
-            springer.reactToGround(self.ground.ground_line)
+            springer.reactToGround(self.ground.ground_line) # Must be after fall and before move (otherwise movement thround ground)
+            springer.performAction(self.ground.ground_line) # Must be after react to ground and before move (jumps are negated at react to ground)
             springer.move()
-            springer.performAction(self.ground.ground_line)
 
     def run_visual(self):
         self.ground.draw()
