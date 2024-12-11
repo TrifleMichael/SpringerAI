@@ -7,6 +7,7 @@ import settings
 
 pygame.init()
 
+
 # Screen dimensions
 WIDTH, HEIGHT = settings.settings["x_res"], settings.settings["y_res"]
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -14,38 +15,19 @@ pygame.display.set_caption("SpringersAI")
 
 springer_logic = SpringerLogic()
 sim_manager = SimulationManager(screen, springer_logic)
-
-# Clock for controlling the frame rate
-clock = pygame.time.Clock()
-
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-
-angle = 0
+sim_manager.spawn_springers(1)
 
 running = True
-frame_counter = 0
+generation = 0
 while running:
+    generations = int(input("How many generations should be ran? :"))
+    run_animation = bool(input("Graphics mode for the chosen generations? y/n :") in ["y", "Y", "y\n", "Y\n"])
 
-    # Check if animation should be ran
-    run_animation = settings.settings["first_animation_frame"] < frame_counter
+    # generations = 1
+    # run_animation = True
 
-    if run_animation:
-        # Check for closing signal
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-        # Clear frame
-        screen.fill(BLACK)
-
-    sim_manager.run_frame(run_animation)
-
-    if run_animation:
-        # Update the display
-        pygame.display.flip()
-        clock.tick(60)
-
-    frame_counter += 1
+    for generation in range(generations):
+        sim_manager.simulate_generation(run_animation)
 
 # Quit pygame
 pygame.quit()
