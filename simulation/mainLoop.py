@@ -23,10 +23,11 @@ while running:
     generations = int(input("How many generations should be ran? :"))
     run_animation = bool(input("Graphics mode for the chosen generations? y/n :") in ["y", "Y", "y\n", "Y\n"])
 
-    # generations = 1
+    # generations = 10
     # run_animation = True
 
     for generation in range(generations):
+        print(f"--- Generation {generation+1} ---")
         sim_manager.simulate_generation(run_animation)
 
 # Quit pygame

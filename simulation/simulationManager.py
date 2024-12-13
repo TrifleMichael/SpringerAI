@@ -24,7 +24,7 @@ class SimulationManager:
         for springer in self.springers:
             springer.fall()
             springer.reactToGround(self.ground.ground_line) # Must be after fall and before move (otherwise movement thround ground)
-            springer.performAction(self.ground.ground_line) # Must be after react to ground and before move (jumps are negated at react to ground)
+            springer.performAction(self.ground.ground_line) # Must be after react to ground and before move (jumps are negated at react to ground, also springers must report their death that may have happened at reactToGround)
             springer.move()
 
         self.springers = [springer for springer in self.springers if not springer.marked_for_removal]
@@ -60,5 +60,7 @@ class SimulationManager:
         self.spawn_springers(settings.settings["springers_per_generation"])
         for iteration in range(settings.settings["frames_per_generation"]):
             self.run_frame(run_animation)
+            if len(self.springers) == 0:
+                break
 
             

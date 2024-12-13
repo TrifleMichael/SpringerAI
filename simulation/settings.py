@@ -2,7 +2,7 @@ settings = {
 
     # General
     "frames_per_generation": 600,
-    "springers_per_generation": 1,
+    "springers_per_generation": 6,
 
     # Graphics
     "first_animation_frame": 100,

@@ -2,11 +2,12 @@ import physics
 import numpy as np
 from SpringerLogic import SpringerLogic
 import settings
+from random import randrange
 
 class Springer:
     def __init__(self, starting_coords: physics.Point, length: float, logic: SpringerLogic):
         self.starting_coords = starting_coords
-        self.line = physics.Line(starting_coords, physics.Point(starting_coords.position_vector[0], starting_coords.position_vector[1]-length))
+        self.line = physics.Line(starting_coords, physics.Point(starting_coords.position_vector[0] + randrange(-7, 8), starting_coords.position_vector[1]-length)) # TODO: Remove random twists
         self.logic = logic
         self.marked_for_removal = False # As objects cannot delete itself, this flag signals to simulation manager when a springer should be deleted
 
@@ -24,6 +25,7 @@ class Springer:
         self.state["last_jump"] = self.last_jump
         self.state["last_shift"] = self.last_shift
         self.state["height"] = self.getHeight(ground_line)
+        self.state["marked_for_removal"] = self.marked_for_removal
 
     def move(self):
         self.line.move()
