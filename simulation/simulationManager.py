@@ -15,6 +15,7 @@ class SimulationManager:
         self.springers = []
         self.clock = pygame.time.Clock() # Clock for controlling the frame rate
         self.total_reward = 0
+        self.delayed_learning_frames = 15
 
     def run_frame(self, run_animation: bool):
         self.run_physics()
@@ -63,12 +64,13 @@ class SimulationManager:
                     pending["frame_count"] += 1
 
                     # Apply reward if enough frames have passed
-                    if pending["frame_count"] >= 30:  # Example delay, adjust as needed
+                    if pending["frame_count"] >= self.delayed_learning_frames:  # Example delay, adjust as needed
                         # Calculate reward based on delayed results
                         # delayed_reward = self.calculate_delayed_reward(springer, pending["old_state"], new_state)
                         delayed_reward = 1
                         if pending["action"] == "":
                             delayed_reward = 0.01
+                        delayed_reward += abs(new_state["x_leg_distance"] - pending["old_state"]["x_leg_distance"])/pending["frame_count"]/10
                         self.total_reward += delayed_reward
 
                         print(f"Applying reward {delayed_reward} for action {pending['action']} after {pending['frame_count']} frames")
@@ -83,13 +85,15 @@ class SimulationManager:
                 
                 # Remove processed rewards
                 springer.pending_rewards = [
-                    p for p in springer.pending_rewards if p["frame_count"] < 30
+                    p for p in springer.pending_rewards if p["frame_count"] < self.delayed_learning_frames
                 ]
 
             # Penalize recent actions if springer is marked for removal
             if springer.marked_for_removal:
                 for idx, pending in enumerate(springer.pending_rewards):
                     penalty = -(idx + 1)  # Define the penalty value
+                    # scale the penalty based on self.delayed_learning_frames
+                    penalty = penalty / self.delayed_learning_frames * 6
                     if pending["action"] == "":
                         penalty = -5
                     springer.logic.update_knowledge(

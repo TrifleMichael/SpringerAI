@@ -30,6 +30,11 @@ class Springer:
         self.state["marked_for_removal"] = self.marked_for_removal
         self.state["speed"] = self.speed
         self.state["x_speed"] = self.x_speed
+        leg_index = 1
+        if self.line.position_matrix[0][1] > self.line.position_matrix[1][1]: # Leg has higher y (positive y is downwards)
+            leg_index = 0
+
+        self.state["x_leg_distance"] = self.line.position_matrix[leg_index][0] - self.starting_coords.position_vector[0]
 
     def move(self):
         # Save some info about previous state
@@ -120,4 +125,4 @@ class Springer:
                         ground_head_vector /= np.sqrt(sum(ground_head_vector**2))
                         perp_vector = np.array(-ground_head_vector[1], ground_head_vector[0]) # Rotate anticlockwise
                         self.line.speed_matrix[air_index] += perp_vector * settings.settings["side_force"]
-            
+        return action
