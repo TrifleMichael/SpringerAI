@@ -104,7 +104,6 @@ def line_react_to_ground(line: Line, ground: Line):
 
         # Conserve only the perpendicular part
         perp_unit_vec = rotate_point_around_point(Point(0, 0), ground_unit_vec, np.pi/2)
-
         # TODO: Make the tie breaker below more reasonably written
         if ground_unit_vec.position_vector[0] == 0: # If leg 90 deg to ground then swing to the direction the speed is pointing to
             if line.speed_matrix[air_point_index][0] > 0:
@@ -121,10 +120,9 @@ def line_react_to_ground(line: Line, ground: Line):
         # print(np.sqrt(np.sum(a**2)))
 
         # Correct above ground point to maintain constant length # TODO: FINISH
-        # actual_lenght = np.sqrt(((line.position_matrix[air_point_index] - line.position_matrix[ground_point_index])**2).sum())
-        # line.position_matrix[air_point_index] = 
-        # line.position_matrix[air_point_index] = line.position_matrix[air_point_index] - line.position_matrix[ground_point_index]
-        # raise NotImplementedError("Ayyo")
+        actual_lenght = np.sqrt(((line.position_matrix[air_point_index] - line.position_matrix[ground_point_index])**2).sum())
+        correction_vector = (line.position_matrix[air_point_index] - line.position_matrix[ground_point_index]) * (line.length / actual_lenght - 1)
+        line.position_matrix[air_point_index] += correction_vector
 
 def intersect(l1: Line, l2: Line):
     p1, p2 = l1.position_matrix[0], l1.position_matrix[1]

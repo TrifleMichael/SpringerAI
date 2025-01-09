@@ -15,6 +15,8 @@ class Springer:
         self.state = {}
         self.last_jump = settings.settings["jump_cooldown"]
         self.last_shift = settings.settings["shift_cooldown"]
+        self.speed = 0
+        self.x_speed = 0
 
     # TODO: Remove ground line from update state
     def updateState(self, ground_line: physics.Line):
@@ -26,9 +28,17 @@ class Springer:
         self.state["last_shift"] = self.last_shift
         self.state["height"] = self.getHeight(ground_line)
         self.state["marked_for_removal"] = self.marked_for_removal
+        self.state["speed"] = self.speed
+        self.state["x_speed"] = self.x_speed
 
     def move(self):
+        # Save some info about previous state
+        previous_position = self.line.position_matrix.copy()
+
         self.line.move()
+
+        # Update state variables after change
+        self.calculateSpeed(previous_position)
         self.step += 1
         self.last_jump += 1
         self.last_shift += 1
@@ -40,6 +50,19 @@ class Springer:
         result = physics.line_react_to_ground(self.line, ground_line)
         if result == "underground":
             self.marked_for_removal = True
+
+    def getGroundIndex(self):
+        if self.line.position_matrix[0][1] > self.line.position_matrix[1][1]:
+            return 0
+        else:
+            return 1
+
+    def calculateSpeed(self, previous_position: np.matrix):
+        air_index = 1 - self.getGroundIndex()
+        difference = self.line.position_matrix[air_index] - previous_position[air_index]
+        self.speed = np.sqrt(sum(difference**2))
+        self.x_speed = self.line.position_matrix[air_index][0] - previous_position[air_index][0]
+        
 
     def getHeight(self, ground_line: physics.Line):
         if self.line.position_matrix[0][1] > self.line.position_matrix[1][1]:
@@ -87,14 +110,14 @@ class Springer:
                     self.last_shift = 0
                     if action == "right":
                         print("Moving right")
-                        self.line.speed_matrix[air_index][0] += settings.settings["side_force"]
+                        ground_head_vector = self.line.position_matrix[1 - air_index] - self.line.position_matrix[air_index]
+                        ground_head_vector /= np.sqrt(sum(ground_head_vector**2))
+                        perp_vector = np.array(ground_head_vector[1], -ground_head_vector[0]) # Rotate clockwise
+                        self.line.speed_matrix[air_index] += perp_vector * settings.settings["side_force"]
                     elif action == "left":
                         print("Moving left")
-                        self.line.speed_matrix[air_index][0] -= settings.settings["side_force"]
-                    return action
-        
-        elif action == "":
-            print("Doing nothing")
-            return ""
-        return action
+                        ground_head_vector = self.line.position_matrix[1 - air_index] - self.line.position_matrix[air_index]
+                        ground_head_vector /= np.sqrt(sum(ground_head_vector**2))
+                        perp_vector = np.array(-ground_head_vector[1], ground_head_vector[0]) # Rotate anticlockwise
+                        self.line.speed_matrix[air_index] += perp_vector * settings.settings["side_force"]
             
