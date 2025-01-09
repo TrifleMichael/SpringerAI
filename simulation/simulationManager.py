@@ -24,7 +24,7 @@ class SimulationManager:
     def run_step(self, run_animation: bool):
         for springer in self.springers:
             # Save the old state before any updates
-            old_state = springer.getState()
+            old_state = springer.getState().copy()
             
             # Springer falls and reacts to the ground
             springer.fall()
@@ -36,38 +36,65 @@ class SimulationManager:
             # Springer moves after reacting to the ground
             springer.move()
 
+            new_state = springer.getState().copy()
+
             # Mark springer for removal if it falls below the ground
-            if springer.getState()["height"] < 0:
+            if new_state["height"] < 0:
                 springer.marked_for_removal = True
 
-            # Update rewards if the action was valid
-            if action is not None and not springer.marked_for_removal:
-                reward = 1
-                if action == "":
-                    reward = 0.1
-
-                self.total_reward += reward
-
-                # Store the current action, state, and reward in history
-                if not hasattr(springer, "action_history"):
-                    springer.action_history = []
-                springer.action_history.append((old_state.copy(), springer.getState().copy(), action, reward))
+            # Track delayed outcomes of actions
+            if not springer.marked_for_removal:
                 
-                # Limit history to a maximum length for efficiency
-                if len(springer.action_history) > 3:  # Adjust the length as needed
-                    springer.action_history.pop(0)
+                if not hasattr(springer, "pending_rewards"):
+                    springer.pending_rewards = []
 
-                # Update the knowledge with the immediate reward
-                springer.logic.update_knowledge(old_state, action, reward, springer.getState())
+                # Save the current state, action, and frame
+                if old_state:
+                    springer.pending_rewards.append({
+                        "old_state": old_state.copy(),
+                        "action": action,
+                        "frame_count": 0
+                    })
+                print(springer.pending_rewards)
+
+            # Evaluate pending rewards
+            if hasattr(springer, "pending_rewards"):
+                for pending in springer.pending_rewards:
+                    pending["frame_count"] += 1
+
+                    # Apply reward if enough frames have passed
+                    if pending["frame_count"] >= 30:  # Example delay, adjust as needed
+                        # Calculate reward based on delayed results
+                        # delayed_reward = self.calculate_delayed_reward(springer, pending["old_state"], new_state)
+                        delayed_reward = 1
+                        if pending["action"] == "":
+                            delayed_reward = 0.01
+                        self.total_reward += delayed_reward
+
+                        print(f"Applying reward {delayed_reward} for action {pending['action']} after {pending['frame_count']} frames")
+
+                        # Update knowledge with delayed reward
+                        springer.logic.update_knowledge(
+                            pending["old_state"],
+                            pending["action"],
+                            delayed_reward,
+                            new_state
+                        )
+                
+                # Remove processed rewards
+                springer.pending_rewards = [
+                    p for p in springer.pending_rewards if p["frame_count"] < 30
+                ]
 
             # Penalize recent actions if springer is marked for removal
-            
             if springer.marked_for_removal:
-                for idx, (old_state, new_state, action, reward) in enumerate(springer.action_history):
-                    reward = -(idx+1)  # Define the penalty value
-                    if action == "":
-                        reward = -5
-                    springer.logic.update_knowledge(old_state, action, reward, new_state)
+                for idx, pending in enumerate(springer.pending_rewards):
+                    penalty = -(idx + 1)  # Define the penalty value
+                    if pending["action"] == "":
+                        penalty = -5
+                    springer.logic.update_knowledge(
+                        pending["old_state"], pending["action"], penalty, new_state
+                    )
 
         # Remove springers marked for removal
         self.springers = [springer for springer in self.springers if not springer.marked_for_removal]
@@ -80,6 +107,15 @@ class SimulationManager:
         # Run animation if enabled
         if run_animation:
             self.run_visual()
+
+    def calculate_delayed_reward(self, springer, old_state, new_state):
+        """
+        Calculate the reward based on the delayed outcome of an action.
+        Adjust this function to incorporate the logic for evaluating
+        delayed results of actions.
+        """
+        return 1
+
 
 
 

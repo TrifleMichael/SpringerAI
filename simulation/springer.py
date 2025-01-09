@@ -96,4 +96,5 @@ class Springer:
         elif action == "":
             print("Doing nothing")
             return ""
+        return action
             

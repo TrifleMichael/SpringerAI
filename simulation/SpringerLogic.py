@@ -100,6 +100,9 @@ class SpringerLogic_QLearning:
         """
         Update the Q-table using the Q-learning update rule.
         """
+
+        if state is next_state:
+            raise Exception("Error: State and next state are the same object")
         leg_angle = self.quantize_leg_angle(self.retrieve_from_state(state, "leg_angle"))
         height = self.quantize_height(self.retrieve_from_state(state, "height"))
         state_key = (leg_angle, height)
@@ -107,6 +110,8 @@ class SpringerLogic_QLearning:
         next_leg_angle = self.quantize_leg_angle(self.retrieve_from_state(next_state, "leg_angle"))
         next_height = self.quantize_height(self.retrieve_from_state(next_state, "height"))
         next_state_key = (next_leg_angle, next_height)
+
+        print(f"Updating knowledge for state: {state_key}, {action}, {reward}, {next_state_key}")
 
         # Initialize Q-values for current and next states if not present
         if state_key not in self.knowledge:

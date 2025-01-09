@@ -17,8 +17,8 @@ settings = {
     # Springers
     "jump_force": 3,
     "side_force": 3,
-    "jump_cooldown": 60,
-    "shift_cooldown": 30
+    "jump_cooldown": 30,
+    "shift_cooldown": 10
 }
 
 debug = {}
