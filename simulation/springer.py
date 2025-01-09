@@ -15,6 +15,8 @@ class Springer:
         self.state = {}
         self.last_jump = settings.settings["jump_cooldown"]
         self.last_shift = settings.settings["shift_cooldown"]
+        self.speed = 0
+        self.x_speed = 0
 
     # TODO: Remove ground line from update state
     def updateState(self, ground_line: physics.Line):
@@ -26,9 +28,17 @@ class Springer:
         self.state["last_shift"] = self.last_shift
         self.state["height"] = self.getHeight(ground_line)
         self.state["marked_for_removal"] = self.marked_for_removal
+        self.state["speed"] = self.speed
+        self.state["x_speed"] = self.x_speed
 
     def move(self):
+        # Save some info about previous state
+        previous_position = self.line.position_matrix.copy()
+
         self.line.move()
+
+        # Update state variables after change
+        self.calculateSpeed(previous_position)
         self.step += 1
         self.last_jump += 1
         self.last_shift += 1
@@ -41,14 +51,25 @@ class Springer:
         if result == "underground":
             self.marked_for_removal = True
 
+    def getGroundIndex(self):
+        if self.line.position_matrix[0][1] > self.line.position_matrix[1][1]:
+            return 0
+        else:
+            return 1
+
+    def calculateSpeed(self, previous_position: np.matrix):
+        air_index = 1 - self.getGroundIndex()
+        difference = self.line.position_matrix[air_index] - previous_position[air_index]
+        self.speed = np.sqrt(sum(difference**2))
+        self.x_speed = self.line.position_matrix[air_index][0] - previous_position[air_index][0]
+        
+
     def getHeight(self, ground_line: physics.Line):
         if self.line.position_matrix[0][1] > self.line.position_matrix[1][1]:
             ground_index = 0
         else:
             ground_index = 1
         return ground_line.position_matrix[0][1] - self.line.position_matrix[ground_index][1]
-    
-        
 
     def performAction(self, ground_line: physics.Line):
         self.updateState(ground_line)
