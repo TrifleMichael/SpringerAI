@@ -105,8 +105,14 @@ class Springer:
                     self.last_shift = 0
                     if action == "right":
                         print("Moving right")
-                        self.line.speed_matrix[air_index][0] += settings.settings["side_force"]
+                        ground_head_vector = self.line.position_matrix[1 - air_index] - self.line.position_matrix[air_index]
+                        ground_head_vector /= np.sqrt(sum(ground_head_vector**2))
+                        perp_vector = np.array(ground_head_vector[1], -ground_head_vector[0]) # Rotate clockwise
+                        self.line.speed_matrix[air_index] += perp_vector * settings.settings["side_force"]
                     elif action == "left":
                         print("Moving left")
-                        self.line.speed_matrix[air_index][0] -= settings.settings["side_force"]
+                        ground_head_vector = self.line.position_matrix[1 - air_index] - self.line.position_matrix[air_index]
+                        ground_head_vector /= np.sqrt(sum(ground_head_vector**2))
+                        perp_vector = np.array(-ground_head_vector[1], ground_head_vector[0]) # Rotate anticlockwise
+                        self.line.speed_matrix[air_index] += perp_vector * settings.settings["side_force"]
             
