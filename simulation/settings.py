@@ -2,7 +2,7 @@ settings = {
 
     # General
     "frames_per_generation": 600,
-    "springers_per_generation": 6,
+    "springers_per_generation": 1,
 
     # Graphics
     "first_animation_frame": 100,
@@ -18,7 +18,7 @@ settings = {
     "jump_force": 3,
     "side_force": 3,
     "jump_cooldown": 60,
-    "shift_cooldown": 60
+    "shift_cooldown": 30
 }
 
 debug = {}

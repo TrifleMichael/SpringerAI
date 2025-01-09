@@ -20,7 +20,7 @@ class Springer:
     def updateState(self, ground_line: physics.Line):
         self.state["step"] = self.step
         self.state["x_distance"] = max(self.line.position_matrix[0][0], self.line.position_matrix[1][0]) - self.starting_coords.position_vector[0]
-        self.state["leg_angle"] = physics.angle_between_vectors(self.line.position_matrix[0] - self.line.position_matrix[1], np.array([0, 1]))
+        self.state["leg_angle"] = physics.angle_between_vectors(self.line.position_matrix[0] - self.line.position_matrix[1], np.array([1, 0]))
         # Leg angle is measured from bottom direction clockwise
         self.state["last_jump"] = self.last_jump
         self.state["last_shift"] = self.last_shift
@@ -48,7 +48,9 @@ class Springer:
             ground_index = 1
         return ground_line.position_matrix[0][1] - self.line.position_matrix[ground_index][1]
     
-        
+    def getState(self):
+        return self.state
+    
 
     def performAction(self, ground_line: physics.Line):
         self.updateState(ground_line)
@@ -72,6 +74,7 @@ class Springer:
                 # Add multiplied unit tensor to speed
                 self.line.speed_matrix += unit_vec * settings.settings["jump_force"]
                 print("Jumping")
+                return action
         elif action in ["right", "left"]:
             if self.line.position_matrix[0][1] > self.line.position_matrix[1][1]:
                 ground_index = 0
@@ -88,4 +91,9 @@ class Springer:
                     elif action == "left":
                         print("Moving left")
                         self.line.speed_matrix[air_index][0] -= settings.settings["side_force"]
+                    return action
+        
+        elif action == "":
+            print("Doing nothing")
+            return ""
             
