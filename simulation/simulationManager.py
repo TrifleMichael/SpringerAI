@@ -44,7 +44,7 @@ class SimulationManager:
                 springer.marked_for_removal = True
 
             # Track delayed outcomes of actions
-            if not springer.marked_for_removal:
+            if not springer.marked_for_removal and action != None:
                 
                 if not hasattr(springer, "pending_rewards"):
                     springer.pending_rewards = []
@@ -70,11 +70,11 @@ class SimulationManager:
                         delayed_reward = 1
                         # if pending["action"] == "":
                         #     delayed_reward = 0.01
-                        delayed_reward += new_state["x_leg_distance"] - pending["old_state"]["x_leg_distance"]/pending["frame_count"]/10
+                        delayed_reward += abs(new_state["x_leg_distance"] - pending["old_state"]["x_leg_distance"])/pending["frame_count"]
                         self.total_reward += delayed_reward
 
-                        # print(f"Applying reward {delayed_reward} for action {pending['action']} after {pending['frame_count']} frames")
-
+                        print(f"Applying reward {delayed_reward} for action {pending['action']} after {pending['frame_count']} frames")
+                        
                         # Update knowledge with delayed reward
                         springer.logic.update_knowledge(
                             pending["old_state"],
@@ -90,13 +90,16 @@ class SimulationManager:
 
             # Penalize recent actions if springer is marked for removal
             if springer.marked_for_removal:
+                last_action_count = len(springer.pending_rewards)
                 for idx, pending in enumerate(springer.pending_rewards):
-                    penalty = -1
-                    # penalty = -(idx + 1)  # Define the penalty value
+                    # penalty = -1
+                    penalty = -(idx + 1)  # Define the penalty value
                     # scale the penalty based on self.delayed_learning_frames
-                    penalty = penalty / self.delayed_learning_frames * 6
+                    # penalty = penalty / self.delayed_learning_frames * 2
+                    penalty = penalty / last_action_count * 2
                     # if pending["action"] == "":
                     #     penalty = -5
+                    print(f"Applying penalty {penalty} for action {pending['action']} after {pending['frame_count']} frames")
                     springer.logic.update_knowledge(
                         pending["old_state"], pending["action"], penalty, new_state
                     )
