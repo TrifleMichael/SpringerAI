@@ -35,6 +35,7 @@ class Springer:
             leg_index = 0
 
         self.state["x_leg_distance"] = self.line.position_matrix[leg_index][0] - self.starting_coords.position_vector[0]
+        self.state["can_jump"] = 1 if self.getHeight(ground_line) == 0 and self.last_jump > settings.settings["jump_cooldown"] else 0
 
     def move(self):
         # Save some info about previous state
@@ -101,7 +102,7 @@ class Springer:
                 unit_vec /= np.sqrt(np.sum(unit_vec**2))
                 # Add multiplied unit tensor to speed
                 self.line.speed_matrix += unit_vec * settings.settings["jump_force"]
-                print("Jumping")
+                # print("Jumping")
                 return action
         elif action in ["right", "left"]:
             if self.line.position_matrix[0][1] > self.line.position_matrix[1][1]:
@@ -114,13 +115,13 @@ class Springer:
                 if self.last_shift > settings.settings["shift_cooldown"]:
                     self.last_shift = 0
                     if action == "right":
-                        print("Moving right")
+                        # print("Moving right")
                         ground_head_vector = self.line.position_matrix[1 - air_index] - self.line.position_matrix[air_index]
                         ground_head_vector /= np.sqrt(sum(ground_head_vector**2))
                         perp_vector = np.array(ground_head_vector[1], -ground_head_vector[0]) # Rotate clockwise
                         self.line.speed_matrix[air_index] += perp_vector * settings.settings["side_force"]
                     elif action == "left":
-                        print("Moving left")
+                        # print("Moving left")
                         ground_head_vector = self.line.position_matrix[1 - air_index] - self.line.position_matrix[air_index]
                         ground_head_vector /= np.sqrt(sum(ground_head_vector**2))
                         perp_vector = np.array(-ground_head_vector[1], ground_head_vector[0]) # Rotate anticlockwise

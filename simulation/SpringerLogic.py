@@ -43,6 +43,9 @@ class SpringerLogic_QLearning:
         self.discount_factor = discount_factor
         self.epsilon = epsilon
         self.knowledge = {}  # Q-table, represented as a dictionary
+        for i in range(leg_angle_buckets):
+            for j in range(height_buckets):
+                self.knowledge[(i, j)] = np.zeros((4)) # Assures the dictionary will be in readable order
 
     def quantize_leg_angle(self, leg_angle: float) -> int:
         """
@@ -60,8 +63,10 @@ class SpringerLogic_QLearning:
         Quantize height into discrete buckets within the specified range.
         """
         min_height, max_height = self.height_range
-        if height < min_height or height > max_height:
-            raise ValueError(f"Height {height} out of range [{min_height}, {max_height}]")
+        if height < min_height:
+            height = min_height
+        if height > max_height:
+            height = max_height
         
         bucket_size = (max_height - min_height) / self.height_buckets
         return int((height - min_height) // bucket_size)
@@ -111,7 +116,7 @@ class SpringerLogic_QLearning:
         next_height = self.quantize_height(self.retrieve_from_state(next_state, "height"))
         next_state_key = (next_leg_angle, next_height)
 
-        print(f"Updating knowledge for state: {state_key}, {action}, {reward}, {next_state_key}")
+        # print(f"Updating knowledge for state: {state_key}, {action}, {reward}, {next_state_key}")
 
         # Initialize Q-values for current and next states if not present
         if state_key not in self.knowledge:
@@ -128,8 +133,8 @@ class SpringerLogic_QLearning:
         #     reward + self.discount_factor * best_next_action - self.knowledge[state_key][action_index]
         # )
         self.knowledge[state_key][action_index] = (1- self.learning_rate) * old_value + self.learning_rate * (reward + self.discount_factor * best_next_action)
-        if reward < 0:
-            print(f"Penalized action: {state_key}, {action}, {reward}, {next_state_key}\nv: {old_value} -> {self.knowledge[state_key][action_index]}")
+        # if reward < 0:
+            # print(f"Penalized action: {state_key}, {action}, {reward}, {next_state_key}\nv: {old_value} -> {self.knowledge[state_key][action_index]}")
 
     def apply_reward(self, state: dict) -> float:
         """

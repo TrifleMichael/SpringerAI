@@ -21,4 +21,4 @@ settings = {
     "shift_cooldown": 10
 }
 
-debug = {}
+debug = {"reward_list": []}

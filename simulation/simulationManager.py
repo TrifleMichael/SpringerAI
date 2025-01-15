@@ -15,7 +15,7 @@ class SimulationManager:
         self.springers = []
         self.clock = pygame.time.Clock() # Clock for controlling the frame rate
         self.total_reward = 0
-        self.delayed_learning_frames = 15
+        self.delayed_learning_frames = 60
 
     def run_frame(self, run_animation: bool):
         self.run_physics()
@@ -56,7 +56,7 @@ class SimulationManager:
                         "action": action,
                         "frame_count": 0
                     })
-                print(springer.pending_rewards)
+                # print(springer.pending_rewards)
 
             # Evaluate pending rewards
             if hasattr(springer, "pending_rewards"):
@@ -68,12 +68,12 @@ class SimulationManager:
                         # Calculate reward based on delayed results
                         # delayed_reward = self.calculate_delayed_reward(springer, pending["old_state"], new_state)
                         delayed_reward = 1
-                        if pending["action"] == "":
-                            delayed_reward = 0.01
-                        delayed_reward += abs(new_state["x_leg_distance"] - pending["old_state"]["x_leg_distance"])/pending["frame_count"]/10
+                        # if pending["action"] == "":
+                        #     delayed_reward = 0.01
+                        delayed_reward += new_state["x_leg_distance"] - pending["old_state"]["x_leg_distance"]/pending["frame_count"]/10
                         self.total_reward += delayed_reward
 
-                        print(f"Applying reward {delayed_reward} for action {pending['action']} after {pending['frame_count']} frames")
+                        # print(f"Applying reward {delayed_reward} for action {pending['action']} after {pending['frame_count']} frames")
 
                         # Update knowledge with delayed reward
                         springer.logic.update_knowledge(
@@ -91,11 +91,12 @@ class SimulationManager:
             # Penalize recent actions if springer is marked for removal
             if springer.marked_for_removal:
                 for idx, pending in enumerate(springer.pending_rewards):
-                    penalty = -(idx + 1)  # Define the penalty value
+                    penalty = -1
+                    # penalty = -(idx + 1)  # Define the penalty value
                     # scale the penalty based on self.delayed_learning_frames
                     penalty = penalty / self.delayed_learning_frames * 6
-                    if pending["action"] == "":
-                        penalty = -5
+                    # if pending["action"] == "":
+                    #     penalty = -5
                     springer.logic.update_knowledge(
                         pending["old_state"], pending["action"], penalty, new_state
                     )
@@ -165,7 +166,11 @@ class SimulationManager:
             self.run_step(run_animation)
             if len(self.springers) == 0:
                 print(f"Generation ended after {iteration} iterations, total reward: {self.total_reward}")
+                settings.debug["reward_list"].append(self.total_reward)
                 print(f"q-table: {self.springer_logic.knowledge}")
+                average_rewards = sum(settings.debug["reward_list"]) / len(settings.debug["reward_list"])
+                print(f"Average reward: {average_rewards}")
+                print(f"Current reward: {self.total_reward}")
                 self.total_reward = 0
                 break
 
