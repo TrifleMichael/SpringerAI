@@ -2,7 +2,7 @@ import pygame
 import sys
 from math import radians
 from simulationManager import SimulationManager
-from SpringerLogic import SpringerLogic, SpringerLogic_QLearning, SpringerLogic_QLearning_can_jump
+from SpringerLogic import EpsilonScheduler, SpringerLogic, SpringerLogic_DQL_can_jump, SpringerLogic_QLearning, SpringerLogic_QLearning_can_jump
 import settings
 import math
 import numpy as np
@@ -18,11 +18,14 @@ pygame.display.set_caption("SpringersAI")
 
 EPSILON = 0.1
 
-springer_logic = SpringerLogic_QLearning_can_jump(leg_angle_range=(0, math.pi),  # Leg angles range from 0 to 180 degrees
-                                            leg_angle_buckets=6,
-                                            epsilon=EPSILON,
-                                            learning_rate=0.1)
+# springer_logic = SpringerLogic_QLearning_can_jump(leg_angle_range=(0, math.pi),  # Leg angles range from 0 to 180 degrees
+#                                             leg_angle_buckets=6,
+#                                             epsilon=EPSILON,
+#                                             learning_rate=0.1)
 # springer_logic.knowledge = { (0,0) : np.array([0,0,10,0]), (6,0) : np.array([0,10,0,0])}
+epsilon = EpsilonScheduler(0.7, 0.01, 0.99)
+springer_logic = SpringerLogic_DQL_can_jump(leg_angle_range=(0, math.pi), epsilon=epsilon)  # Leg angles range from 0 to 180 degrees
+
 sim_manager = SimulationManager(screen, springer_logic)
 sim_manager.spawn_springers(1)
 
@@ -40,11 +43,13 @@ while running:
 
     for generation in range(generations):
         print(f"--- Generation {generation+1} ---")
+        print(epsilon)
+        epsilon.decay()
         sim_manager.simulate_generation(run_animation)
 
     reward_list = settings.debug["reward_list"]
     plot_rewards(reward_list)
-
+    print("springer_logic.min_max", springer_logic.min_max)
 # Quit pygame
 pygame.quit()
 sys.exit()

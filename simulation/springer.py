@@ -85,6 +85,10 @@ class Springer:
     def performAction(self, ground_line: physics.Line):
         self.updateState(ground_line)
         action = self.logic.chooseAction(self.state)
+        #if action is a string  dont change anythin if its a number match it to the action
+        if isinstance(action, int):
+            action = self.ACTIONS[action]
+        
         if action == "jump" and self.last_jump > settings.settings["jump_cooldown"]:
             self.last_jump = 0
             # TODO: Move to physics (jump(line, ground))
