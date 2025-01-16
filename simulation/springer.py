@@ -1,11 +1,12 @@
 import physics
 import numpy as np
-from SpringerLogic import SpringerLogic
 import settings
 from random import randrange
 
 class Springer:
-    def __init__(self, starting_coords: physics.Point, length: float, logic: SpringerLogic):
+    ACTIONS = ["jump", "right", "left", ""]
+
+    def __init__(self, starting_coords: physics.Point, length: float, logic):
         self.starting_coords = starting_coords
         self.line = physics.Line(starting_coords, physics.Point(starting_coords.position_vector[0] + randrange(-7, 8), starting_coords.position_vector[1]-length)) # TODO: Remove random twists
         self.logic = logic
@@ -126,4 +127,5 @@ class Springer:
                         ground_head_vector /= np.sqrt(sum(ground_head_vector**2))
                         perp_vector = np.array(-ground_head_vector[1], ground_head_vector[0]) # Rotate anticlockwise
                         self.line.speed_matrix[air_index] += perp_vector * settings.settings["side_force"]
-        return action
+                    return action
+        return None

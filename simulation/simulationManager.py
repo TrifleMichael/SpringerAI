@@ -15,7 +15,7 @@ class SimulationManager:
         self.springers = []
         self.clock = pygame.time.Clock() # Clock for controlling the frame rate
         self.total_reward = 0
-        self.delayed_learning_frames = 60
+        self.delayed_learning_frames = 45
 
     def run_frame(self, run_animation: bool):
         self.run_physics()
@@ -67,7 +67,7 @@ class SimulationManager:
                     if pending["frame_count"] >= self.delayed_learning_frames:  # Example delay, adjust as needed
                         # Calculate reward based on delayed results
                         # delayed_reward = self.calculate_delayed_reward(springer, pending["old_state"], new_state)
-                        delayed_reward = 1
+                        delayed_reward = 0.5
                         # if pending["action"] == "":
                         #     delayed_reward = 0.01
                         delayed_reward += abs(new_state["x_leg_distance"] - pending["old_state"]["x_leg_distance"])/pending["frame_count"]

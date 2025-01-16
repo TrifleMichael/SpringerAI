@@ -2,7 +2,7 @@ import pygame
 import sys
 from math import radians
 from simulationManager import SimulationManager
-from SpringerLogic import SpringerLogic, SpringerLogic_QLearning
+from SpringerLogic import SpringerLogic, SpringerLogic_QLearning, SpringerLogic_QLearning_can_jump
 import settings
 import math
 import numpy as np
@@ -16,12 +16,10 @@ WIDTH, HEIGHT = settings.settings["x_res"], settings.settings["y_res"]
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("SpringersAI")
 
-EPSILON = 1/400
+EPSILON = 0.1
 
-springer_logic = SpringerLogic_QLearning(   height_range=(-1, 1.2),  # Heights range from 0 to 2
-                                            leg_angle_range=(0, math.pi),  # Leg angles range from 0 to 180 degrees
-                                            height_buckets=2,
-                                            leg_angle_buckets=8,
+springer_logic = SpringerLogic_QLearning_can_jump(leg_angle_range=(0, math.pi),  # Leg angles range from 0 to 180 degrees
+                                            leg_angle_buckets=6,
                                             epsilon=EPSILON,
                                             learning_rate=0.1)
 # springer_logic.knowledge = { (0,0) : np.array([0,0,10,0]), (6,0) : np.array([0,10,0,0])}
