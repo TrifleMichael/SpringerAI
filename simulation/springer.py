@@ -4,11 +4,11 @@ import settings
 from random import randrange
 
 class Springer:
-    ACTIONS = ["jump", "right", "left", ""]
+    ACTIONS = ["jump", "left", "right"]
 
     def __init__(self, starting_coords: physics.Point, length: float, logic):
         self.starting_coords = starting_coords
-        self.line = physics.Line(starting_coords, physics.Point(starting_coords.position_vector[0] + randrange(-7, 8), starting_coords.position_vector[1]-length)) # TODO: Remove random twists
+        self.line = physics.Line(starting_coords, physics.Point(starting_coords.position_vector[0], starting_coords.position_vector[1]-length)) # TODO: Remove random twists
         self.logic = logic
         self.marked_for_removal = False # As objects cannot delete itself, this flag signals to simulation manager when a springer should be deleted
 
@@ -84,7 +84,6 @@ class Springer:
     
 
     def performAction(self, ground_line: physics.Line):
-        self.updateState(ground_line)
         action = self.logic.chooseAction(self.state)
         if action == "jump" and self.last_jump > settings.settings["jump_cooldown"]:
             self.last_jump = 0
@@ -105,7 +104,7 @@ class Springer:
                 # Add multiplied unit tensor to speed
                 self.line.speed_matrix += unit_vec * settings.settings["jump_force"]
                 # print("Jumping")
-                return action
+                # return action
         elif action in ["right", "left"]:
             if self.line.position_matrix[0][1] > self.line.position_matrix[1][1]:
                 ground_index = 0
@@ -130,5 +129,5 @@ class Springer:
                         perp_vector = np.array((-ground_head_vector[1], ground_head_vector[0])) # Rotate anticlockwise
                         perp_vector *= settings.settings["side_force"]
                         self.line.speed_matrix[air_index] += perp_vector 
-                    return action
-        return None
+                    # return action
+        return action

@@ -31,6 +31,150 @@ class SpringerLogic:
         if self.retrieveFromState(state, "marked_for_removal"):
             print("Managed to score:", self.retrieveFromState(state, "x_distance"))
 
+class SpringerLogic_QLearning_v2:
+    def __init__(self, leg_angle_range, leg_angle_buckets, learning_rate=0.1, discount_factor=0.9, epsilon=0.1):
+        """
+        Initialize the Q-learning logic for Springer objects.
+        """
+        self.fall_penalty_duration_fraction = 0.05
+        self.speed_average_duration = 20
+        self.reward_mulitplier = 3
+        self.penalty = 0.00001
+
+        self.leg_angle_range = leg_angle_range  # Tuple (min_angle, max_angle)
+        self.leg_angle_buckets = leg_angle_buckets
+        self.action_number = len(Springer.ACTIONS)
+        self.learning_rate = learning_rate
+        self.discount_factor = discount_factor
+        self.epsilon = epsilon
+        self.knowledge = {}  # Q-table, represented as a dictionary
+        for i in range(leg_angle_buckets):
+            for j in range(3): # speed buckets
+                for k in range(2):
+                    self.knowledge[(i, j, k)] = np.ones(len(Springer.ACTIONS)) # Assures the dictionary will be in readable order
+
+        self.iteration_history = []
+        self.last_score = None
+
+    def quantize_leg_angle(self, leg_angle: float) -> int:
+        """
+        Quantize leg angle into discrete buckets within the specified range.
+        """
+        min_angle, max_angle = self.leg_angle_range
+        if leg_angle < min_angle or leg_angle > max_angle:
+            raise ValueError(f"Leg angle {leg_angle} out of range [{min_angle}, {max_angle}]")
+        
+        bucket_size = (max_angle - min_angle) / self.leg_angle_buckets
+        return int((leg_angle - min_angle) // bucket_size)
+
+    def quantize_speed(self, x_speed: float) -> int:
+        """
+        Quantize height into discrete buckets within the specified range.
+        """
+        if x_speed < -0.3:
+            return 0
+        if x_speed > 0.3:
+            return 2
+        return 1
+
+    def retrieve_from_state(self, state: dict, parameter: str):
+        """
+        Retrieve a value from the state dictionary with error checking.
+        """
+        if parameter not in state:
+            raise Exception(f"Error: Incorrectly accessing state, parameter {parameter} does not exist in {state}")
+        return state[parameter]
+        
+
+    def chooseAction(self, state: dict) -> str:
+        """
+        Choose an action using epsilon-greedy policy.
+        """
+        leg_angle = self.quantize_leg_angle(self.retrieve_from_state(state, "leg_angle"))
+        speed = self.quantize_speed(self.retrieve_from_state(state, "x_speed"))
+        can_jump = state["can_jump"]
+        state_key = (leg_angle, speed, can_jump)
+
+        # Initialize Q-values for this state if not already present
+        if state_key not in self.knowledge:
+            self.knowledge[state_key] = np.ones(self.action_number)
+
+        if np.random.uniform(0, 1) < self.epsilon:
+            # Explore: choose random action
+            return np.random.choice(Springer.ACTIONS)
+        else:
+            # Exploit: choose best action
+            # print(f"Choosing action for state: {state_key}, {self.knowledge[state_key]}")
+            # print(self.knowledge[state_key])
+            action_index = np.argmax(self.knowledge[state_key])
+            # print(f"Action index: {action_index}, {self.knowledge[state_key][action_index]}")
+            return ["jump", "right", "left"][action_index]
+
+    def update_knowledge(self, state: dict, action: str):
+        """
+        Update the Q-table using the Q-learning update rule.
+        """
+        state["action"] = action
+        self.iteration_history.append(state)
+        if state["marked_for_removal"]:
+            penalty_duration = int(max(0, len(self.iteration_history) * self.fall_penalty_duration_fraction - 1))
+            # REWARDS
+            for state_index, h1_state in enumerate(self.iteration_history[:-penalty_duration]):
+                # print("Rewarding action", h1_state["action"])
+                h2_state = self.iteration_history[state_index+1]
+
+                # Calculate reward
+                speed_end_index = min(penalty_duration-1, state_index+self.speed_average_duration)
+                future_position = self.iteration_history[speed_end_index]["x_distance"]
+                if state_index == speed_end_index:
+                    reward = 0
+                else:
+                    reward = self.reward_mulitplier * (future_position - h1_state["x_distance"]) / (speed_end_index - state_index) + 1
+                # reward += h1_state["x_speed"]
+
+                leg_angle = self.quantize_leg_angle(self.retrieve_from_state(h1_state, "leg_angle"))
+                speed = self.quantize_speed(self.retrieve_from_state(h1_state, "x_speed"))
+                can_jump = h1_state["can_jump"]
+                state_key = (leg_angle, speed, can_jump)
+
+                next_leg_angle = self.quantize_leg_angle(self.retrieve_from_state(h2_state, "leg_angle"))
+                next_speed = self.quantize_speed(self.retrieve_from_state(h2_state, "x_speed"))
+                next_can_jump = h2_state["can_jump"]
+                next_state_key = (next_leg_angle, next_speed, next_can_jump)
+
+                # print(f"Updating knowledge for state: {state_key}, {action}, {reward}, {next_state_key}")
+
+                # Initialize Q-values for current and next states if not present
+                if state_key not in self.knowledge:
+                    self.knowledge[state_key] = np.zeros(self.action_number)
+                if next_state_key not in self.knowledge:
+                    self.knowledge[next_state_key] = np.zeros(self.action_number)
+
+                action_index = Springer.ACTIONS.index(h1_state["action"])
+                best_next_action = np.max(self.knowledge[next_state_key])
+                old_value = self.knowledge[state_key][action_index]
+                
+                self.knowledge[state_key][action_index] = (1- self.learning_rate) * old_value + self.learning_rate * (reward + self.discount_factor * best_next_action)
+                # print("Rewarding", state_key, "for", h1_state["action"], "with", (1- self.learning_rate) * old_value + self.learning_rate * (reward + self.discount_factor * best_next_action), "iteration", state_index)
+                # print(self.knowledge)
+                # print("STATE: ", h1_state)
+            # PENALTIES
+            for state_index, h1_state in enumerate(self.iteration_history[penalty_duration:-2]):
+                leg_angle = self.quantize_leg_angle(self.retrieve_from_state(h1_state, "leg_angle"))
+                speed = self.quantize_speed(self.retrieve_from_state(h1_state, "speed"))
+                can_jump = h1_state["can_jump"]
+                state_key = (leg_angle, speed, can_jump)
+                # if h1_state["action"] is None:
+                action_index = Springer.ACTIONS.index(h1_state["action"])
+                self.knowledge[state_key][action_index] -= self.penalty
+                # print("Penalizing", state_key, "for", h1_state["action"], "with", self.penalty, "iteration", state_index+penalty_duration)
+                # print("STATE: ", h1_state)
+
+
+            self.iteration_history = []
+            self.last_score = state["x_distance"]
+
+
 class SpringerLogic_Manual:
     def __init__(self):
         # A - left, W - jump, D - right
@@ -54,7 +198,7 @@ class SpringerLogic_Manual:
             return "left"
         if keys[pygame.K_d]:
             return "right"
-        return ""
+        # return ""
     
     def quantize_leg_angle(self, leg_angle: float) -> int:
         pass
@@ -65,7 +209,7 @@ class SpringerLogic_Manual:
     def retrieve_from_state(self, state: dict, parameter: str):
         pass
 
-    def update_knowledge(self, state: dict, action: str, reward: float, next_state: dict):
+    def update_knowledge(self, x, y):
         pass
 
     def apply_reward(self, state: dict) -> float:
@@ -141,7 +285,7 @@ class SpringerLogic_QLearning:
             # print(f"Choosing action for state: {state_key}, {self.knowledge[state_key]}")
             action_index = np.argmax(self.knowledge[state_key])
             # print(f"Action index: {action_index}, {self.knowledge[state_key][action_index]}")
-            return ["jump", "right", "left", ""][action_index]
+            return ["jump", "right", "left"][action_index]
 
     def update_knowledge(self, state: dict, action: str, reward: float, next_state: dict):
         """
