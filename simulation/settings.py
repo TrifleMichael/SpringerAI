@@ -10,15 +10,18 @@ settings = {
     "y_res": 600,
 
     # Physics
-    "gravity": 0.06,
+    "gravity": 0.08,
     "ground_height_fraction": 0.1,
     "epsilon": 0.001,
 
     # Springers
     "jump_force": 3,
-    "side_force": 3,
+    "side_force": 1.5,
     "jump_cooldown": 120,
     "shift_cooldown": 1
 }
 
-debug = {"reward_list": []}
+debug = {
+         "reward_list": [],
+         "score_list": []
+         }

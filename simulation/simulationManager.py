@@ -11,7 +11,7 @@ class SimulationManager:
         self.display = display
         self.ground = solids.Ground(display)
         self.springer_logic = springer_logic
-        self.default_spawning_coords = physics.Point(350, 450)
+        self.default_spawning_coords = physics.Point(250, 500)
         self.default_springer_length = 100
         self.springers = []
         self.clock = pygame.time.Clock() # Clock for controlling the frame rate
@@ -109,8 +109,11 @@ class SimulationManager:
             self.run_step(run_animation)
             if len(self.springers) == 0 or iteration == settings.settings["frames_per_generation"] - 1:
                 print(f"Generation ended after {iteration} iterations, final distance: {int(self.springer_logic.last_score)}")
-                settings.debug["reward_list"].append(self.springer_logic.last_score)
+                settings.debug["score_list"].append(self.springer_logic.last_score)
+                settings.debug["reward_list"].append(self.springer_logic.total_rewards)
                 print(f"q-table: {self.springer_logic.knowledge}")
+                print(f"Total rewards:", self.springer_logic.total_rewards)
+                self.springer_logic.total_rewards = 0
                 break
 
             

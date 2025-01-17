@@ -6,7 +6,7 @@ from SpringerLogic import SpringerLogic, SpringerLogic_QLearning, SpringerLogic_
 import settings
 import math
 import numpy as np
-from plotting import plot_rewards
+from plotting import plot_rewards_and_scores
 
 pygame.init()
 
@@ -23,7 +23,7 @@ EPSILON = 0.1
 #                                             epsilon=EPSILON,
 #                                             learning_rate=0.1)
 
-springer_logic = SpringerLogic_QLearning_v2(leg_angle_range=(0, math.pi), leg_angle_buckets=5, learning_rate=0.001, discount_factor=0.1, epsilon=0.005)
+springer_logic = SpringerLogic_QLearning_v2(leg_angle_range=(0, math.pi), leg_angle_buckets=5, learning_rate=0.01, discount_factor=0.1, epsilon=0)
 
 # springer_logic = SpringerLogic_Manual()
 
@@ -52,7 +52,8 @@ while running:
 
     if generations > 1:
         reward_list = settings.debug["reward_list"]
-        plot_rewards(reward_list)
+        score_list = settings.debug["score_list"]
+        plot_rewards_and_scores(score_list, reward_list)
 
 # Quit pygame
 pygame.quit()

@@ -23,7 +23,7 @@ class Springer:
     # TODO: Remove ground line from update state
     def updateState(self, ground_line: physics.Line):
         self.state["step"] = self.step
-        self.state["x_distance"] = max(self.line.position_matrix[0][0], self.line.position_matrix[1][0]) - self.starting_coords.position_vector[0]
+        self.state["x_distance"] = min(self.line.position_matrix[0][0], self.line.position_matrix[1][0]) - self.starting_coords.position_vector[0]
         self.state["leg_angle"] = physics.angle_between_vectors(self.line.position_matrix[0] - self.line.position_matrix[1], np.array([1, 0]))
         # Leg angle is measured from bottom direction clockwise
         self.state["last_jump"] = self.last_jump

@@ -2,6 +2,8 @@ import numpy as np
 import settings
 from random import uniform, randrange, choice
 import pygame
+import copy
+import random
 
 from springer import Springer
 
@@ -39,7 +41,7 @@ class SpringerLogic_QLearning_v2:
         self.fall_penalty_duration_fraction = 0.05
         self.speed_average_duration = 20
         self.reward_mulitplier = 3
-        self.penalty = 0.00001
+        self.penalty = 0.001
 
         self.leg_angle_range = leg_angle_range  # Tuple (min_angle, max_angle)
         self.leg_angle_buckets = leg_angle_buckets
@@ -55,6 +57,7 @@ class SpringerLogic_QLearning_v2:
 
         self.iteration_history = []
         self.last_score = None
+        self.total_rewards = 0
 
     def quantize_leg_angle(self, leg_angle: float) -> int:
         """
@@ -106,7 +109,17 @@ class SpringerLogic_QLearning_v2:
             # Exploit: choose best action
             # print(f"Choosing action for state: {state_key}, {self.knowledge[state_key]}")
             # print(self.knowledge[state_key])
-            action_index = np.argmax(self.knowledge[state_key])
+
+            # action_index = np.argmax(self.knowledge[state_key]) # TODO: THE OLD WAY
+
+            state_knowledge = copy.deepcopy(self.knowledge[state_key])
+            state_knowledge -= state_knowledge.min()
+            if sum(state_knowledge) == 0:
+                return ["jump", "right", "left"][random.randrange(3)]
+            action_index = random.choices(range(len(state_knowledge)), weights=state_knowledge, k=1)[0]
+
+            # print("FROM", state_knowledge, "CHOSEN", ["jump", "right", "left"][action_index])
+
             # print(f"Action index: {action_index}, {self.knowledge[state_key][action_index]}")
             return ["jump", "right", "left"][action_index]
 
@@ -146,14 +159,15 @@ class SpringerLogic_QLearning_v2:
 
                 # Initialize Q-values for current and next states if not present
                 if state_key not in self.knowledge:
-                    self.knowledge[state_key] = np.zeros(self.action_number)
+                    self.knowledge[state_key] = np.ones(self.action_number)
                 if next_state_key not in self.knowledge:
-                    self.knowledge[next_state_key] = np.zeros(self.action_number)
+                    self.knowledge[next_state_key] = np.ones(self.action_number)
 
                 action_index = Springer.ACTIONS.index(h1_state["action"])
                 best_next_action = np.max(self.knowledge[next_state_key])
                 old_value = self.knowledge[state_key][action_index]
                 
+                self.total_rewards += reward
                 self.knowledge[state_key][action_index] = (1- self.learning_rate) * old_value + self.learning_rate * (reward + self.discount_factor * best_next_action)
                 # print("Rewarding", state_key, "for", h1_state["action"], "with", (1- self.learning_rate) * old_value + self.learning_rate * (reward + self.discount_factor * best_next_action), "iteration", state_index)
                 # print(self.knowledge)
@@ -166,6 +180,7 @@ class SpringerLogic_QLearning_v2:
                 state_key = (leg_angle, speed, can_jump)
                 # if h1_state["action"] is None:
                 action_index = Springer.ACTIONS.index(h1_state["action"])
+                self.total_rewards -= self.penalty
                 self.knowledge[state_key][action_index] -= self.penalty
                 # print("Penalizing", state_key, "for", h1_state["action"], "with", self.penalty, "iteration", state_index+penalty_duration)
                 # print("STATE: ", h1_state)
@@ -188,7 +203,9 @@ class SpringerLogic_Manual:
         self.learning_rate = 0
         self.discount_factor = 0
         self.epsilon = 0
-        self.knowledge = {} 
+        self.knowledge = {}
+        self.last_score = 0
+        self.total_rewards = 0
 
     def chooseAction(self, state: dict) -> str:
         keys = pygame.key.get_pressed()

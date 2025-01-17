@@ -80,7 +80,7 @@ def rotate_line_around_point(point_stationary: Point, line: Line, angle: float):
 
 def line_react_to_ground(line: Line, ground: Line):
     # Assumes no actors outside visible plane
-    if line.position_matrix[0][1] > ground.position_matrix[0][1] and line.position_matrix[1][1] > ground.position_matrix[0][1]:
+    if line.position_matrix[0][1] >= ground.position_matrix[0][1] and line.position_matrix[1][1] >= ground.position_matrix[0][1]:
         return "underground"
     intersect_point = intersect(line, ground)
     if intersect_point is None:
