@@ -18,6 +18,7 @@ class Springer:
         self.last_shift = settings.settings["shift_cooldown"]
         self.speed = 0
         self.x_speed = 0
+        self.pending_rewards = []
 
     # TODO: Remove ground line from update state
     def updateState(self, ground_line: physics.Line):
@@ -113,19 +114,21 @@ class Springer:
             air_index = 1 - ground_index
             # Check if standing on the ground
             if self.line.position_matrix[ground_index][1] - ground_line.position_matrix[0][1] > -settings.settings["epsilon"]:
-                if self.last_shift > settings.settings["shift_cooldown"]:
+                if self.last_shift >= settings.settings["shift_cooldown"]:
                     self.last_shift = 0
                     if action == "right":
                         # print("Moving right")
                         ground_head_vector = self.line.position_matrix[1 - air_index] - self.line.position_matrix[air_index]
                         ground_head_vector /= np.sqrt(sum(ground_head_vector**2))
-                        perp_vector = np.array(ground_head_vector[1], -ground_head_vector[0]) # Rotate clockwise
-                        self.line.speed_matrix[air_index] += perp_vector * settings.settings["side_force"]
+                        perp_vector = np.array((ground_head_vector[1], -ground_head_vector[0])) # Rotate clockwise
+                        perp_vector *= settings.settings["side_force"]
+                        self.line.speed_matrix[air_index] += perp_vector
                     elif action == "left":
                         # print("Moving left")
                         ground_head_vector = self.line.position_matrix[1 - air_index] - self.line.position_matrix[air_index]
                         ground_head_vector /= np.sqrt(sum(ground_head_vector**2))
-                        perp_vector = np.array(-ground_head_vector[1], ground_head_vector[0]) # Rotate anticlockwise
-                        self.line.speed_matrix[air_index] += perp_vector * settings.settings["side_force"]
+                        perp_vector = np.array((-ground_head_vector[1], ground_head_vector[0])) # Rotate anticlockwise
+                        perp_vector *= settings.settings["side_force"]
+                        self.line.speed_matrix[air_index] += perp_vector 
                     return action
         return None

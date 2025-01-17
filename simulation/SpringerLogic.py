@@ -1,6 +1,7 @@
 import numpy as np
 import settings
 from random import uniform, randrange, choice
+import pygame
 
 from springer import Springer
 
@@ -29,6 +30,46 @@ class SpringerLogic:
             
         if self.retrieveFromState(state, "marked_for_removal"):
             print("Managed to score:", self.retrieveFromState(state, "x_distance"))
+
+class SpringerLogic_Manual:
+    def __init__(self):
+        # A - left, W - jump, D - right
+
+        # The variables below are here for compatibility with QLearning but they don't affect anything
+        self.height_range = 0
+        self.leg_angle_range = 0
+        self.height_buckets = 0
+        self.leg_angle_buckets = 0
+        self.action_number = len(Springer.ACTIONS)
+        self.learning_rate = 0
+        self.discount_factor = 0
+        self.epsilon = 0
+        self.knowledge = {} 
+
+    def chooseAction(self, state: dict) -> str:
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_w]:
+            return "jump"
+        if keys[pygame.K_a]:
+            return "left"
+        if keys[pygame.K_d]:
+            return "right"
+        return ""
+    
+    def quantize_leg_angle(self, leg_angle: float) -> int:
+        pass
+
+    def quantize_height(self, height: float) -> int:
+        pass
+
+    def retrieve_from_state(self, state: dict, parameter: str):
+        pass
+
+    def update_knowledge(self, state: dict, action: str, reward: float, next_state: dict):
+        pass
+
+    def apply_reward(self, state: dict) -> float:
+        pass
 
 class SpringerLogic_QLearning:
     def __init__(self, height_range, leg_angle_range, height_buckets, leg_angle_buckets, learning_rate=0.1, discount_factor=0.9, epsilon=0.1):
