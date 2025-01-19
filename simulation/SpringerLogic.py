@@ -38,10 +38,13 @@ class SpringerLogic_QLearning_v2:
         """
         Initialize the Q-learning logic for Springer objects.
         """
-        self.fall_penalty_duration_fraction = 0.05
-        self.speed_average_duration = 20
+        self.run_animation = False
+
+        # self.fall_penalty_duration_fraction = 0.05
+        self.fall_penalty_frames = 3
+        self.speed_average_duration = 2
         self.reward_mulitplier = 3
-        self.penalty = 0.001
+        self.penalty_multiplier = 0.001
 
         self.leg_angle_range = leg_angle_range  # Tuple (min_angle, max_angle)
         self.leg_angle_buckets = leg_angle_buckets
@@ -52,8 +55,14 @@ class SpringerLogic_QLearning_v2:
         self.knowledge = {}  # Q-table, represented as a dictionary
         for i in range(leg_angle_buckets):
             for j in range(3): # speed buckets
-                for k in range(2):
-                    self.knowledge[(i, j, k)] = np.ones(len(Springer.ACTIONS)) # Assures the dictionary will be in readable order
+                for k in range(2): # jump
+                    for l in range(2):
+                        self.knowledge[(i, j, k, l)] = np.ones(len(Springer.ACTIONS)) # Assures the dictionary will be in readable order
+                        if k == 0:
+                            self.knowledge[(i, j, k, l)][0] = 0
+                        if l == 0:
+                            self.knowledge[(i, j, k, l)][1] = 0
+                            self.knowledge[(i, j, k, l)][2] = 0
 
         self.iteration_history = []
         self.last_score = None
@@ -96,7 +105,8 @@ class SpringerLogic_QLearning_v2:
         leg_angle = self.quantize_leg_angle(self.retrieve_from_state(state, "leg_angle"))
         speed = self.quantize_speed(self.retrieve_from_state(state, "x_speed"))
         can_jump = state["can_jump"]
-        state_key = (leg_angle, speed, can_jump)
+        can_shift = state["can_shift"]
+        state_key = (leg_angle, speed, can_jump, can_shift)
 
         # Initialize Q-values for this state if not already present
         if state_key not in self.knowledge:
@@ -115,13 +125,13 @@ class SpringerLogic_QLearning_v2:
             state_knowledge = copy.deepcopy(self.knowledge[state_key])
             state_knowledge -= state_knowledge.min()
             if sum(state_knowledge) == 0:
-                return ["jump", "right", "left"][random.randrange(3)]
+                return Springer.ACTIONS[random.randrange(3)]
             action_index = random.choices(range(len(state_knowledge)), weights=state_knowledge, k=1)[0]
 
             # print("FROM", state_knowledge, "CHOSEN", ["jump", "right", "left"][action_index])
 
             # print(f"Action index: {action_index}, {self.knowledge[state_key][action_index]}")
-            return ["jump", "right", "left"][action_index]
+            return Springer.ACTIONS[action_index]
 
     def update_knowledge(self, state: dict, action: str):
         """
@@ -129,8 +139,10 @@ class SpringerLogic_QLearning_v2:
         """
         state["action"] = action
         self.iteration_history.append(state)
+        self.last_score = state["x_distance"]
         if state["marked_for_removal"]:
-            penalty_duration = int(max(0, len(self.iteration_history) * self.fall_penalty_duration_fraction - 1))
+            # penalty_duration = int(max(0, len(self.iteration_history) * self.fall_penalty_duration_fraction - 1))
+            penalty_duration = 0 if self.fall_penalty_frames > len(self.iteration_history) else self.fall_penalty_frames
             # REWARDS
             for state_index, h1_state in enumerate(self.iteration_history[:-penalty_duration]):
                 # print("Rewarding action", h1_state["action"])
@@ -142,18 +154,20 @@ class SpringerLogic_QLearning_v2:
                 if state_index == speed_end_index:
                     reward = 0
                 else:
-                    reward = self.reward_mulitplier * (future_position - h1_state["x_distance"]) / (speed_end_index - state_index) + 1
+                    reward = self.reward_mulitplier * (future_position - h1_state["x_distance"]) / (speed_end_index - state_index)
                 # reward += h1_state["x_speed"]
 
                 leg_angle = self.quantize_leg_angle(self.retrieve_from_state(h1_state, "leg_angle"))
                 speed = self.quantize_speed(self.retrieve_from_state(h1_state, "x_speed"))
                 can_jump = h1_state["can_jump"]
-                state_key = (leg_angle, speed, can_jump)
+                can_shift = h1_state["can_shift"]
+                state_key = (leg_angle, speed, can_jump, can_shift)
 
                 next_leg_angle = self.quantize_leg_angle(self.retrieve_from_state(h2_state, "leg_angle"))
                 next_speed = self.quantize_speed(self.retrieve_from_state(h2_state, "x_speed"))
                 next_can_jump = h2_state["can_jump"]
-                next_state_key = (next_leg_angle, next_speed, next_can_jump)
+                next_can_shift = h2_state["can_shift"]
+                next_state_key = (next_leg_angle, next_speed, next_can_jump, next_can_shift)
 
                 # print(f"Updating knowledge for state: {state_key}, {action}, {reward}, {next_state_key}")
 
@@ -167,27 +181,51 @@ class SpringerLogic_QLearning_v2:
                 best_next_action = np.max(self.knowledge[next_state_key])
                 old_value = self.knowledge[state_key][action_index]
                 
+                # reward = -reward
                 self.total_rewards += reward
-                self.knowledge[state_key][action_index] = (1- self.learning_rate) * old_value + self.learning_rate * (reward + self.discount_factor * best_next_action)
-                # print("Rewarding", state_key, "for", h1_state["action"], "with", (1- self.learning_rate) * old_value + self.learning_rate * (reward + self.discount_factor * best_next_action), "iteration", state_index)
+                self.knowledge[state_key][action_index] = (1 - self.learning_rate) * old_value + self.learning_rate * reward
+                # self.knowledge[state_key][action_index] = (1 - self.learning_rate) * old_value + self.learning_rate * (reward + self.discount_factor * best_next_action)
+                # if reward > 0:
+                #     self.knowledge[state_key][action_index] = (1 - self.learning_rate) * old_value + self.learning_rate * reward
+
+                if self.knowledge[state_key][action_index] < 0:
+                    self.knowledge[state_key][action_index] = 0.01
+
+                if can_jump == 0:
+                    self.knowledge[state_key][Springer.ACTIONS.index("jump")] = 0
+                if can_shift == 0:
+                    self.knowledge[state_key][Springer.ACTIONS.index("left")] = 0
+                    self.knowledge[state_key][Springer.ACTIONS.index("right")] = 0
+
+                if self.run_animation:
+                    print("Rewarding", state_key, "for", h1_state["action"], "with", self.learning_rate * reward, "iteration", state_index)
                 # print(self.knowledge)
                 # print("STATE: ", h1_state)
             # PENALTIES
-            for state_index, h1_state in enumerate(self.iteration_history[penalty_duration:-2]):
-                leg_angle = self.quantize_leg_angle(self.retrieve_from_state(h1_state, "leg_angle"))
-                speed = self.quantize_speed(self.retrieve_from_state(h1_state, "speed"))
-                can_jump = h1_state["can_jump"]
-                state_key = (leg_angle, speed, can_jump)
-                # if h1_state["action"] is None:
-                action_index = Springer.ACTIONS.index(h1_state["action"])
-                self.total_rewards -= self.penalty
-                self.knowledge[state_key][action_index] -= self.penalty
-                # print("Penalizing", state_key, "for", h1_state["action"], "with", self.penalty, "iteration", state_index+penalty_duration)
+            if not state["dont_apply_penalty"]:
+                for state_index, h1_state in enumerate(self.iteration_history[-penalty_duration:-1]):
+                    leg_angle = self.quantize_leg_angle(self.retrieve_from_state(h1_state, "leg_angle"))
+                    speed = self.quantize_speed(self.retrieve_from_state(h1_state, "speed"))
+                    can_jump = h1_state["can_jump"]
+                    can_shift = h1_state["can_shift"]
+                    state_key = (leg_angle, speed, can_jump, can_shift)
+                    # if h1_state["action"] is None:
+                    action_index = Springer.ACTIONS.index(h1_state["action"])
+                    penalty = (len(self.iteration_history) - state_index) * self.penalty_multiplier
+                    self.total_rewards -= penalty
+                    self.knowledge[state_key][action_index] -= penalty
+                    if self.knowledge[state_key][action_index] < 0:
+                        self.knowledge[state_key][action_index] = 0.01
+                    if self.run_animation:
+                        print("Penalizing", state_key, "for", h1_state["action"], "with", penalty, "iteration", state_index+penalty_duration)
+
+                        
+                    if can_jump == 0:
+                        self.knowledge[state_key][Springer.ACTIONS.index("jump")] = 0
+                    if can_shift == 0:
+                        self.knowledge[state_key][Springer.ACTIONS.index("left")] = 0
+                        self.knowledge[state_key][Springer.ACTIONS.index("right")] = 0
                 # print("STATE: ", h1_state)
-
-
-            self.iteration_history = []
-            self.last_score = state["x_distance"]
 
 
 class SpringerLogic_Manual:

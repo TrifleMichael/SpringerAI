@@ -10,15 +10,15 @@ settings = {
     "y_res": 600,
 
     # Physics
-    "gravity": 0.08,
+    "gravity": 0.04,
     "ground_height_fraction": 0.1,
     "epsilon": 0.001,
 
     # Springers
     "jump_force": 3,
-    "side_force": 1.5,
-    "jump_cooldown": 120,
-    "shift_cooldown": 1
+    "side_force": 10,
+    "jump_cooldown": 30,
+    "shift_cooldown": 8
 }
 
 debug = {

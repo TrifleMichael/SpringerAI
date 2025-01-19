@@ -16,7 +16,7 @@ WIDTH, HEIGHT = settings.settings["x_res"], settings.settings["y_res"]
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("SpringersAI")
 
-EPSILON = 0.1
+EPSILON = 0.01
 
 # springer_logic = SpringerLogic_QLearning_can_jump(leg_angle_range=(0, math.pi),  # Leg angles range from 0 to 180 degrees
 #                                             leg_angle_buckets=6,

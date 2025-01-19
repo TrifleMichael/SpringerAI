@@ -103,10 +103,15 @@ class SimulationManager:
         self.springers += [Springer(self.default_spawning_coords, self.default_springer_length, self.springer_logic) for _ in range(number)]
 
     def simulate_generation(self, run_animation: bool):
+        self.springer_logic.run_animation = run_animation
         self.despawn_springers()
         self.spawn_springers(settings.settings["springers_per_generation"])
         for iteration in range(settings.settings["frames_per_generation"]):
             self.run_step(run_animation)
+            if iteration == settings.settings["frames_per_generation"] - 2:
+                for springer in self.springers:
+                    springer.marked_for_removal = True
+                    springer.state["dont_apply_penalty"] = True
             if len(self.springers) == 0 or iteration == settings.settings["frames_per_generation"] - 1:
                 print(f"Generation ended after {iteration} iterations, final distance: {int(self.springer_logic.last_score)}")
                 settings.debug["score_list"].append(self.springer_logic.last_score)
@@ -114,6 +119,7 @@ class SimulationManager:
                 print(f"q-table: {self.springer_logic.knowledge}")
                 print(f"Total rewards:", self.springer_logic.total_rewards)
                 self.springer_logic.total_rewards = 0
+                self.springer_logic.iteration_history = []
                 break
 
             

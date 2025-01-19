@@ -4,7 +4,7 @@ import settings
 from random import randrange
 
 class Springer:
-    ACTIONS = ["jump", "left", "right"]
+    ACTIONS = ["jump", "left", "right", "pass"]
 
     def __init__(self, starting_coords: physics.Point, length: float, logic):
         self.starting_coords = starting_coords
@@ -19,6 +19,7 @@ class Springer:
         self.speed = 0
         self.x_speed = 0
         self.pending_rewards = []
+        self.state["dont_apply_penalty"] = False
 
     # TODO: Remove ground line from update state
     def updateState(self, ground_line: physics.Line):
@@ -38,6 +39,7 @@ class Springer:
 
         self.state["x_leg_distance"] = self.line.position_matrix[leg_index][0] - self.starting_coords.position_vector[0]
         self.state["can_jump"] = 1 if self.getHeight(ground_line) == 0 and self.last_jump > settings.settings["jump_cooldown"] else 0
+        self.state["can_shift"] = 1 if self.getHeight(ground_line) == 0 and self.last_shift >= settings.settings["shift_cooldown"] else 0
 
     def move(self):
         # Save some info about previous state
@@ -85,8 +87,7 @@ class Springer:
 
     def performAction(self, ground_line: physics.Line):
         action = self.logic.chooseAction(self.state)
-        if action == "jump" and self.last_jump > settings.settings["jump_cooldown"]:
-            self.last_jump = 0
+        if action == "jump" and self.last_jump > settings.settings["jump_cooldown"] and self.state["can_jump"]:
             # TODO: Move to physics (jump(line, ground))
             # Get ground and air index
             if self.line.position_matrix[0][1] > self.line.position_matrix[1][1]:
@@ -95,7 +96,8 @@ class Springer:
                 ground_index = 1
             air_index = 1 - ground_index
             # Check if standing on the ground
-            if self.line.position_matrix[ground_index][1] - ground_line.position_matrix[0][1] > -settings.settings["epsilon"]:
+            if self.line.position_matrix[ground_index][1] - ground_line.position_matrix[0][1] == 0:
+                self.last_jump = 0
                 # Stop current movement
                 self.line.speed_matrix *= 0                
                 # Get unit vector for direction 
@@ -105,14 +107,14 @@ class Springer:
                 self.line.speed_matrix += unit_vec * settings.settings["jump_force"]
                 # print("Jumping")
                 # return action
-        elif action in ["right", "left"]:
+        elif action in ["right", "left"] and self.state["can_shift"]:
             if self.line.position_matrix[0][1] > self.line.position_matrix[1][1]:
                 ground_index = 0
             else:
                 ground_index = 1
             air_index = 1 - ground_index
             # Check if standing on the ground
-            if self.line.position_matrix[ground_index][1] - ground_line.position_matrix[0][1] > -settings.settings["epsilon"]:
+            if self.line.position_matrix[ground_index][1] - ground_line.position_matrix[0][1] == 0:
                 if self.last_shift >= settings.settings["shift_cooldown"]:
                     self.last_shift = 0
                     if action == "right":
