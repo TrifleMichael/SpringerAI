@@ -103,23 +103,28 @@ def line_react_to_ground(line: Line, ground: Line):
         ground_unit_vec = Point(ground_unit_vec[0], ground_unit_vec[1])
 
         # Conserve only the perpendicular part
-        perp_unit_vec = rotate_point_around_point(Point(0, 0), ground_unit_vec, np.pi/2)
+        if line.speed_matrix[air_point_index][0] < 0:
+            perp_unit_vec = rotate_point_around_point(Point(0, 0), ground_unit_vec, np.pi/2)
+        elif line.speed_matrix[air_point_index][0] > 0:
+            perp_unit_vec = rotate_point_around_point(Point(0, 0), ground_unit_vec, -np.pi/2)
+
         # TODO: Make the tie breaker below more reasonably written
         if ground_unit_vec.position_vector[0] == 0: # If leg 90 deg to ground then swing to the direction the speed is pointing to
             if line.speed_matrix[air_point_index][0] > 0:
                 perp_unit_vec = Point(1, 0)
             else:
                 perp_unit_vec = Point(-1, 0)
-        if perp_unit_vec.position_vector[1] < 0: # If perp vector points up up then rotate it by 180 deg
-            perp_unit_vec.position_vector *= -1
+    
         speed_perp_angle = angle_between_vectors(perp_unit_vec.position_vector, line.speed_matrix[air_point_index])
         speed_module = np.sqrt(np.sum(line.speed_matrix[air_point_index]**2))
         line.speed_matrix[air_point_index] = perp_unit_vec.position_vector * abs(np.cos(speed_perp_angle)) * speed_module
+        # TODO THIS LINE IS WRONG IT CASTS ENTIRE SPEED AND NOT JUST GRAVI SPEED
+        # TODO TO IMPROVE WE NEED TO CALCULATE ANGULAR VELOCITY IN BOTH DIRECTIONS AND SUBTRACT THEM
 
         # a = line.position_matrix[0] - line.position_matrix[1]
         # print(np.sqrt(np.sum(a**2)))
 
-        # Correct above ground point to maintain constant length # TODO: FINISH
+        # Correct above ground point to maintain constant length
         actual_lenght = np.sqrt(((line.position_matrix[air_point_index] - line.position_matrix[ground_point_index])**2).sum())
         correction_vector = (line.position_matrix[air_point_index] - line.position_matrix[ground_point_index]) * (line.length / actual_lenght - 1)
         line.position_matrix[air_point_index] += correction_vector
