@@ -5,6 +5,7 @@ import pygame
 import copy
 import random
 
+from EpsilonScheduler import EpsilonScheduler
 from springer import Springer
 
 class SpringerLogic:
@@ -41,10 +42,10 @@ class SpringerLogic_QLearning_v2:
         self.run_animation = False
 
         # self.fall_penalty_duration_fraction = 0.05
-        self.fall_penalty_frames = 3
-        self.speed_average_duration = 2
-        self.reward_mulitplier = 3
-        self.penalty_multiplier = 0.001
+        self.fall_penalty_frames = settings.rewards["all_penalty_frames"]
+        self.speed_average_duration = settings.rewards["speed_average_duration"]
+        self.reward_mulitplier = settings.rewards["reward_mulitplier"]
+        self.penalty_multiplier = settings.rewards["penalty_multiplier"]
 
         self.leg_angle_range = leg_angle_range  # Tuple (min_angle, max_angle)
         self.leg_angle_buckets = leg_angle_buckets
@@ -112,7 +113,12 @@ class SpringerLogic_QLearning_v2:
         if state_key not in self.knowledge:
             self.knowledge[state_key] = np.ones(self.action_number)
 
-        if np.random.uniform(0, 1) < self.epsilon:
+        if isinstance(self.epsilon, EpsilonScheduler):
+            epsilon_value = self.epsilon.get_epsilon()
+        else:
+            epsilon_value = self.epsilon
+
+        if np.random.uniform(0, 1) < epsilon_value:
             # Explore: choose random action
             return np.random.choice(Springer.ACTIONS)
         else:

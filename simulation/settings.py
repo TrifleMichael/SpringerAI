@@ -21,6 +21,21 @@ settings = {
     "shift_cooldown": 8
 }
 
+rewards = {
+    "all_penalty_frames" : 4,
+    "speed_average_duration" : 7,
+    "reward_mulitplier" : 2.917,
+    "penalty_multiplier": 0.0058,
+}
+learing = {
+    "learning_rate": 0.0064,
+    "discount_factor": 0.162,
+    "leg_angle_buckets": 13,
+    "epsilon_target": 0.051,
+    "epsilon_decay": 0.928,
+    "epsilon_initial": 0.917,
+}
+
 debug = {
          "reward_list": [],
          "score_list": []
