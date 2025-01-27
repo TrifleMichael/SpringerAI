@@ -116,7 +116,8 @@ class SimulationManager:
                 print(f"Generation ended after {iteration} iterations, final distance: {int(self.springer_logic.last_score)}")
                 settings.debug["score_list"].append(self.springer_logic.last_score)
                 settings.debug["reward_list"].append(self.springer_logic.total_rewards)
-                print(f"q-table: {self.springer_logic.knowledge}")
+                if run_animation:
+                    print(f"q-table: {self.springer_logic.knowledge}")
                 print(f"Total rewards:", self.springer_logic.total_rewards)
                 self.springer_logic.total_rewards = 0
                 self.springer_logic.iteration_history = []

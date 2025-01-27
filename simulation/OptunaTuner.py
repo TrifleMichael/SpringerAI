@@ -61,7 +61,7 @@ def run_simulation(trial):
             EPSILON.decay()
 
             # Collect scores
-            score_list.extend(settings.debug["score_list"])
+        score_list = settings.debug["score_list"]
 
         # Quit pygame after the simulation
         pygame.quit()
@@ -84,8 +84,8 @@ if __name__ == "__main__":
     storage_url = "postgresql://optuna_user:optuna_pass@localhost:5432/optuna_db"
 
     # Create Optuna study
-    study = optuna.create_study(direction="maximize", storage=storage_url, study_name="springers_study", load_if_exists=True)
-    study.optimize(run_simulation, n_trials=60)  # Number of trials to run
+    study = optuna.create_study(direction="maximize", storage=storage_url, study_name="springers_study3", load_if_exists=True)
+    study.optimize(run_simulation, n_trials=5)  # Number of trials to run
 
     print("Best trial:")
     print(f"  Value: {study.best_trial.value}")

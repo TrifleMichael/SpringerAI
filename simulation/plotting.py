@@ -6,8 +6,11 @@ def moving_average(data, window_size):
     return np.convolve(data, np.ones(window_size) / window_size, mode='valid')
 
 def plot_rewards_and_scores(score_list, reward_list):
+    print("Plotting rewards and scores")
+    print("Score list:", score_list)
+    print("Reward list:", reward_list)
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))  # Create two side-by-side subplots
-    window_size = len(score_list) // 50  # Window size for moving average
+    window_size = max(len(score_list) // 50, 1)
 
     # Function to plot a single metric with linear fit
     def plot_metric(ax, data, title, label):
